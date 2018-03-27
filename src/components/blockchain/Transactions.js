@@ -19,12 +19,13 @@ import {
     Modal,
     ModalHeader,
     ModalBody,
-    ModalFooter
+    ModalFooter,
+    InputGroup, InputGroupAddon, Input, FormGroup, Label
 } from 'reactstrap'
 
 class Transaction extends Component {
     constructor(props) {
-        super(props)
+        super(props);
         this.state = {
             modal: false
         };
@@ -34,8 +35,8 @@ class Transaction extends Component {
         this.setState({
             modal: !this.state.modal
         });
-    }
-    
+    };
+
     render() {
         let inputs = this.props.transactionData.data.inputs.map((input) => {
             return (<Container key={input.address}>
@@ -53,42 +54,152 @@ class Transaction extends Component {
                 <hr/>
             </Container>)
         });
-        
+
+        return (
+            <Col sm="4">
+                <Card>
+                    <CardBody>
+                        <CardTitle>Transaction {`${this.props.transactionData.id}`}</CardTitle>
+                        <Button color="info" onClick={this.toggle}>Info</Button>
+                        <Modal isOpen={this.state.modal} toggle={this.toggle} className="modal-lg"
+                               style={{wordBreak: "break-all"}}>
+                            <ModalHeader toggle={this.toggle}>Info</ModalHeader>
+                            <ModalBody>
+                                <p><b>Type: </b>{this.props.transactionData.type}</p>
+
+                                <p><b>Inputs:</b></p>
+                                <Container>
+                                    {inputs}
+                                </Container>
+                                <hr/>
+                                <p><b>Outputs</b></p>
+                                <Container>
+                                    {outputs}
+                                </Container>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button color="secondary" onClick={this.toggle}>Close</Button>
+                            </ModalFooter>
+                        </Modal>
+                    </CardBody>
+                    <CardFooter>
+                        {this.props.transactionData.hash}
+                    </CardFooter>
+                </Card>
+                <br/>
+            </Col>
+
+        )
+    }
+}
+
+class CreateTransaction extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            modal: false,
+            walletId: '',
+            fromAddress: '',
+            toAddress: '',
+            amount: '',
+            changeAddress: '',
+            error: ''
+        };
+    }
+
+    toggle = () => {
+        this.setState({
+            modal: !this.state.modal
+        });
+    };
+
+    createTransaction = () => {
+        let options = {
+            method: 'POST',
+            url: `${BASE_URL}operator/wallets/${this.state.walletId}/transactions`,
+            headers: {
+                password: this.props.password,
+                'content-type': 'application/json',
+                accept: 'application/json'
+            },
+            body: {
+                fromAddress: this.state.fromAddress,
+                toAddress: this.state.toAddress,
+                amount: parseInt(this.state.amount),
+                changeAddress: this.state.changeAddress
+            },
+            json: true
+        };
+        let parent = this;
+        request(options, function (error, response, body) {
+            if (error || response.statusCode != 201) {
+                parent.setState({error: response.body});
+                return;
+            }
+            ;
+
+            parent.setState({modal: false});
+            parent.props.getTransactions();
+        });
+    };
+
+    handleWallet = (e) => {
+        this.setState({walletId: e.target.value})
+    };
+
+    handleFromAddress = (e) => {
+        this.setState({fromAddress: e.target.value})
+    };
+
+    handleToAddress = (e) => {
+        this.setState({toAddress: e.target.value})
+    };
+
+    handleAmount = (e) => {
+        this.setState({amount: e.target.value})
+    };
+
+    handleChangeAddress = (e) => {
+        this.setState({changeAddress: e.target.value})
+    };
+
+    render() {
         return (
             <div>
-                <Col sm="4">
-                    <Card>
-                        <CardBody>
-                            <CardTitle>Transaction {`${this.props.transactionData.id}`}</CardTitle>
-                            <Button color="info" onClick={this.toggle}>Info</Button>
-                            <Modal isOpen={this.state.modal} toggle={this.toggle} className="modal-lg" style={{wordBreak: "break-all"}}>
-                                <ModalHeader toggle={this.toggle}>Info</ModalHeader>
-                                <ModalBody>
-                                    <p><b>Type: </b>{this.props.transactionData.type}</p>
-                                    
-                                    <p><b>Inputs:</b></p>
-                                    <Container>
-                                        {inputs}
-                                    </Container>
-                                    <hr/>
-                                    <p><b>Outputs</b></p>
-                                    <Container>
-                                        {outputs}
-                                    </Container>
-                                </ModalBody>
-                                <ModalFooter>
-                                    <Button color="secondary" onClick={this.toggle}>Close</Button>
-                                </ModalFooter>
-                            </Modal>
-                        </CardBody>
-                        <CardFooter>
-                            {this.props.transactionData.hash}
-                        </CardFooter>
-                    </Card>
-                    <br/>
-                </Col>
+                <Button color="primary" onClick={this.toggle}>Create transaction</Button>
+                <Modal isOpen={this.state.modal} toggle={this.toggle} className={this.props.className}>
+                    <ModalHeader toggle={this.toggle}>Create transaction</ModalHeader>
+                    <ModalBody>
+                        {this.state.error && <Alert color="danger">{this.state.error}</Alert>}
+                        <FormGroup>
+                            <Label for="wallet">Wallet</Label>
+                            <Input id="wallet" name="wallet" type="text" onChange={this.handleWallet}/>
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="fromAddress">From Address</Label>
+                            <Input id="fromAddress" name="fromAddress" type="text" onChange={this.handleFromAddress}/>
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="toAddress">To Address</Label>
+                            <Input id="toAddress" name="toAddress" type="text" onChange={this.handleToAddress}/>
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="changeAddress">Change Address</Label>
+                            <Input id="changeAddress" name="changeAddress" type="text"
+                                   onChange={this.handleChangeAddress}/>
+                        </FormGroup>
+                        <FormGroup>
+                            <Label for="amount">Amount</Label>
+                            <Input id="amount" name="amount" type="number" onChange={this.handleAmount}/>
+                        </FormGroup>
+                    </ModalBody>
+                    <ModalFooter>
+                        <Button color="primary" onClick={this.createTransaction}>Create</Button>{' '}
+                        <Button color="secondary" onClick={this.toggle}>Cancel</Button>
+                    </ModalFooter>
+                </Modal>
             </div>
-        )
+        );
     }
 }
 
@@ -102,7 +213,7 @@ export default class Transactions extends Component {
     componentDidMount() {
         this.getTransactions();
     }
-    
+
     getTransactions = () => {
         let options = {
             method: 'GET',
@@ -133,6 +244,8 @@ export default class Transactions extends Component {
         return (
             <div>
                 {this.state.error && <Alert color="danger">{this.state.error}</Alert>}
+                <br/>
+                <CreateTransaction getTransactions={this.getTransactions} password={this.props.password}/>
                 <br/>
                 <Row>
                     {transactions}

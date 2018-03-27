@@ -46,7 +46,7 @@ export default class WalletPasswordModal extends Component {
                         </FormGroup>
                     </ModalBody>
                     <ModalFooter>
-                        <Button color="primary" onClick={this.changePassword}>Do Something</Button>{' '}
+                        <Button color="primary" onClick={this.changePassword}>Save</Button>{' '}
                         <Button color="secondary" onClick={this.toggle}>Cancel</Button>
                     </ModalFooter>
                 </Modal>
