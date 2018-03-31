@@ -18,7 +18,7 @@ import {
     InputGroupAddon
 } from 'reactstrap'
 import {BASE_URL} from '../../utils/settings'
-import request from 'request';
+import * as $ from "jquery";
 
 
 const MiningResult = (props) => {
@@ -75,30 +75,32 @@ export default class MiningPanel extends Component {
     }
 
     mine = () => {
-        let options = {
-            method: 'POST',
-            url: `${BASE_URL}miner/mine`,
-            headers: {
-                'cache-control': 'no-cache',
-                'content-type': 'application/json',
-                accept: 'application/json'
-            },
-            body: {rewardAddress: this.state.rewardAddress},
-            json: true
-        };
         let parent = this;
+
+        let settings = {
+            "async": true,
+            "crossDomain": true,
+            "url": `${BASE_URL}miner/mine`,
+            "method": "POST",
+            "headers": {
+                "accept": "application/json",
+                "content-type": "application/json",
+                "cache-control": "no-cache",
+                "postman-token": "c2bb8bd0-db90-1272-bb4b-4129b11e38f9"
+            },
+            "processData": false,
+            "data": JSON.stringify({rewardAddress: this.state.rewardAddress})
+        };
+
         this.setState({isMining: true});
-        request(options, (error, response, body) => {
+        $.ajax(settings).done((response) => {
             parent.setState({isMining: false});
-            if (error || response.statusCode != 201) {
-                parent.setState({error: body});
-                return;
-            }
-            ;
 
-            parent.setState({result: body})
+            parent.setState({result: response})
+        }).fail(() => {
+            parent.setState({isMining: false});
+            parent.setState({error: 'Error during the mining'});
         });
-
     };
 
     handleAddress = (e) => {

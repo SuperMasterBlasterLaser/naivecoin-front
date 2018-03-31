@@ -3,8 +3,6 @@
  */
 import React, {Component} from 'react';
 import {Nav, NavItem, NavLink} from 'reactstrap'
-import {BASE_URL} from '../../utils/settings'
-import request from 'request';
 import Blocks from './Blocks'
 import Transactions from './Transactions'
 

@@ -6,7 +6,8 @@ import Wallets from './Wallets'
 import WalletPasswordModal from './WalletPasswordModal'
 import {Alert, Button} from 'reactstrap'
 import {BASE_URL} from '../../utils/settings'
-import request from 'request';
+import * as $ from "jquery";
+
 
 export default class WalletPanel extends Component {
     constructor(props) {
@@ -20,45 +21,45 @@ export default class WalletPanel extends Component {
     }
 
     getWallets = () => {
-        let options = {
-            method: 'GET',
-            url: `${BASE_URL}operator/wallets`,
-            headers: {
-                'content-type': 'application/json',
-                accept: 'application/json'
+        let settings = {
+            "async": true,
+            "crossDomain": true,
+            "url": `${BASE_URL}operator/wallets`,
+            "method": "GET",
+            "headers": {
+                "accept": "application/json",
+                "content-type": "application/json",
+
             }
         };
         let parent = this;
-        request(options, (error, response, body) => {
-            if (error) {
-                parent.setState({error: error});
-                return;
-            }
-            parent.setState({wallets: JSON.parse(body)});
+        $.ajax(settings).done((response) => {
+            parent.setState({wallets: response});
+        }).fail(() => {
+            parent.setState({error: 'Failed to fetch wallets'});
         });
-
     };
 
     createWallet = () => {
-        let options = {
-            method: 'POST',
-            url: `${BASE_URL}operator/wallets`,
-            headers: {
-                'content-type': 'application/json',
-                accept: 'application/json'
-            },
-            body: {password: this.props.password},
-            json: true
-        };
         let parent = this;
-        request(options, (error, response, body) => {
-            if (error || response.statusCode != 201) {
-                parent.setState({error: body});
-                return;
-            }
-            parent.getWallets();
-        });
+        let settings = {
+            "async": true,
+            "crossDomain": true,
+            "url": `${BASE_URL}operator/wallets`,
+            "method": "POST",
+            "headers": {
+                "accept": "application/json",
+                "content-type": "application/json",
+            },
+            "processData": false,
+            "data": JSON.stringify({password: this.props.password})
+        };
 
+        $.ajax(settings).done(() => {
+            parent.getWallets();
+        }).fail(() => {
+            parent.setState({error: 'Error while creating wallet'});
+        });
     };
 
     render() {

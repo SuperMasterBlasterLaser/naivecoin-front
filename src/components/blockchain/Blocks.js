@@ -3,7 +3,6 @@
  */
 import React, {Component} from 'react';
 import {BASE_URL} from '../../utils/settings'
-import request from 'request';
 import {
     Alert,
     Col,
@@ -21,6 +20,7 @@ import {
     ModalBody,
     ModalFooter
 } from 'reactstrap'
+import * as $ from "jquery";
 
 
 class Block extends Component {
@@ -110,27 +110,23 @@ export default class Blocks extends Component {
     }
 
     getBlocks = () => {
-        let options = {
-            method: 'GET',
-            url: `${BASE_URL}blockchain/blocks`,
-            headers: {
-                'content-type': 'application/json',
-                accept: 'application/json'
+        let parent = this;
+        let settings = {
+            "async": true,
+            "crossDomain": true,
+            "url": `${BASE_URL}blockchain/blocks`,
+            "method": "GET",
+            "headers": {
+                "accept": "application/json",
+                "content-type": "application/json"
             }
         };
 
-        let parent = this;
-        request(options, function (error, response, body) {
-            if (error || response.statusCode != 200) {
-                parent.setState({error: body});
-                return;
-            }
-            
-
-            body = JSON.parse(body);
-            parent.setState({blocks: body})
+        $.ajax(settings).done(function (response) {
+            parent.setState({blocks: response})
+        }).fail(() => {
+            parent.setState({error: 'Error while fetching blocks'});
         });
-
     };
 
 

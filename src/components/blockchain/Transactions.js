@@ -3,7 +3,6 @@
  */
 import React, {Component} from 'react';
 import {BASE_URL} from '../../utils/settings'
-import request from 'request'
 import {
     Alert,
     Col,
@@ -22,6 +21,8 @@ import {
     ModalFooter,
     InputGroup, InputGroupAddon, Input, FormGroup, Label
 } from 'reactstrap'
+import * as $ from "jquery";
+
 
 class Transaction extends Component {
     constructor(props) {
@@ -114,32 +115,31 @@ class CreateTransaction extends Component {
     };
 
     createTransaction = () => {
-        let options = {
-            method: 'POST',
-            url: `${BASE_URL}operator/wallets/${this.state.walletId}/transactions`,
-            headers: {
-                password: this.props.password,
-                'content-type': 'application/json',
-                accept: 'application/json'
+        let parent = this;
+        let settings = {
+            "async": true,
+            "crossDomain": true,
+            "url": `${BASE_URL}operator/wallets/${this.state.walletId}/transactions`,
+            "method": "POST",
+            "headers": {
+                "accept": "application/json",
+                "content-type": "application/json",
+                "password": this.props.password
             },
-            body: {
+            "processData": false,
+            "data": JSON.stringify({
                 fromAddress: this.state.fromAddress,
                 toAddress: this.state.toAddress,
                 amount: parseInt(this.state.amount),
                 changeAddress: this.state.changeAddress
-            },
-            json: true
+            })
         };
-        let parent = this;
-        request(options, function (error, response, body) {
-            if (error || response.statusCode != 201) {
-                parent.setState({error: response.body});
-                return;
-            }
-            ;
 
+        $.ajax(settings).done((response) => {
             parent.setState({modal: false});
             parent.props.getTransactions();
+        }).fail(() => {
+            parent.setState({error: 'Error during creating transaction'});
         });
     };
 
@@ -215,24 +215,21 @@ export default class Transactions extends Component {
     }
 
     getTransactions = () => {
-        let options = {
-            method: 'GET',
-            url: `${BASE_URL}blockchain/transactions`,
-            headers: {
-                'content-type': 'application/json',
-                accept: 'application/json'
+        let parent = this;
+        let settings = {
+            "async": true,
+            "crossDomain": true,
+            "url": `${BASE_URL}blockchain/transactions`,
+            "method": "GET",
+            "headers": {
+                "accept": "application/json",
+                "content-type": "application/json"
             }
         };
-
-        let parent = this;
-        request(options, function (error, response, body) {
-            if (error || response.statusCode != 200) {
-                parent.setState({error: body});
-                return;
-            }
-
-            body = JSON.parse(body);
-            parent.setState({transactions: body})
+        $.ajax(settings).done(function (response) {
+            parent.setState({transactions: response})
+        }).fail(() => {
+            parent.setState({error: 'Error while getting transactions'});
         });
     };
 

@@ -4,7 +4,7 @@
 import React, {Component} from 'react';
 import {Alert, Card, CardTitle, Row, Col} from 'reactstrap'
 import {BASE_URL} from '../../utils/settings'
-import request from 'request';
+import * as $ from "jquery";
 
 
 export default class NodePanel extends Component {
@@ -18,25 +18,24 @@ export default class NodePanel extends Component {
     }
 
     getNodes = () => {
-        let options = {
-            method: 'GET',
-            url: `${BASE_URL}node/peers`,
-            headers: {
-                'content-type': 'application/json',
-                accept: 'application/json'
+        let parent = this;
+        let settings = {
+            "async": true,
+            "crossDomain": true,
+            "url": `${BASE_URL}node/peers`,
+            "method": "GET",
+            "headers": {
+                "accept": "application/json",
+                "content-type": "application/json"
             }
         };
-        let parent = this;
-        request(options, (error, response, body) => {
-            if (error || response.statusCode != 200) {
-                parent.setState({error: body});
-                return;
-            };
 
-            body = JSON.parse(body);
-            parent.setState({nodes: body})
+        $.ajax(settings).done(function (response) {
+            console.log(response);
+            parent.setState({nodes: response})
+        }).fail(() => {
+            parent.setState({error: 'Failed to get nodes'});
         });
-
     };
 
     render() {

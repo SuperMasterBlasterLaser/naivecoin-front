@@ -16,7 +16,7 @@ import {
     InputGroupAddon,
     InputGroupText
 } from 'reactstrap';
-import request from 'request'
+import * as $ from "jquery";
 
 
 class WalletAddressBalance extends Component {
@@ -26,23 +26,24 @@ class WalletAddressBalance extends Component {
     }
 
     componentDidMount() {
-        let options = {
-            method: 'GET',
-            url: `${BASE_URL}operator/wallets/${this.props.walletId}/addresses/${this.props.address}/balance`,
-            headers: {
-                'cache-control': 'no-cache',
-                'content-type': 'application/json',
-                accept: 'application/json'
+        let parent = this;
+        let settings = {
+            "async": true,
+            "crossDomain": true,
+            "url": `${BASE_URL}operator/wallets/${this.props.walletId}/addresses/${this.props.address}/balance`,
+            "method": "GET",
+            "headers": {
+                "accept": "application/json",
+                "content-type": "application/json"
             }
         };
-        let parent = this;
-        request(options, (error, response, body) => {
-            if (error || response.statusCode != 200) return;
-            body = JSON.parse(body);
-            parent.props.addToBalance(body.balance);
-            parent.setState({balance: body.balance})
-        });
 
+        $.ajax(settings).done(function (response) {
+            parent.props.addToBalance(response.balance);
+            parent.setState({balance: response.balance})
+        }).fail(() => {
+            
+        });
     }
 
     render() {
@@ -70,26 +71,26 @@ class WalletData extends Component {
     };
 
     addAddress = (walletId) => {
-        let options = {
-            method: 'POST',
-            url: `${BASE_URL}operator/wallets/${walletId}/addresses`,
-            headers: {
-                password: this.props.password,
-                'content-type': 'application/json',
-                accept: 'application/json'
-            },
-            body: {},
-            json: true
-        };
         let parent = this;
-        request(options, (error, response, body) => {
-            if (error || response.statusCode != 201) {
-                parent.setState({error: body});
-                return;
-            }
-            parent.setState({addresses: parent.state.addresses.concat([body.address])})
-        });
+        let settings = {
+            "async": true,
+            "crossDomain": true,
+            "url": `${BASE_URL}operator/wallets/${walletId}/addresses`,
+            "method": "POST",
+            "headers": {
+                "accept": "application/json",
+                "content-type": "application/json",
+                "password": this.props.password,
+            },
+            "processData": false,
+            "data": "{}"
+        };
 
+        $.ajax(settings).done( (response) => {
+            parent.setState({addresses: parent.state.addresses.concat([response.address])})
+        }).fail(() => {
+            parent.setState({error: 'Failed to add address'});
+        });
     };
 
     addToBalance = (count) => {
